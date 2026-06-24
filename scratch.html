@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scratch Golf Page</title>
+  <link rel="stylesheet" href="css/scratch.css">
+</head>
+<body>
+  <div class="topbar">
+    <a href="index.html">Back to Professional Site</a>
+    <a href="golfapp.html">Golf Bag Optimizer App</a>
+    <a href="#tableau">Jump to Tableau</a>
+  </div>
+
+  <div class="hero">
+    <h1>Golf Improvement and Bag Strategy</h1>
+    <p>This scratch page explores how golf club selection, distance control, and smarter practice can improve scoring.</p>
+  </div>
+
+  <div class="content-card">
+    <h2>My Current Club Distances</h2>
+    <ol>
+  <li>Wedges
+    <ul>
+      <li>60°: 80 yards</li>
+      <li>56°: 93 yards</li>
+      <li>52°: 103 yards</li>
+      <li>48°: 120 yards</li>
+    </ul>
+  </li>
+
+  <li>Irons
+    <ul>
+      <li>PW: 140 yards</li>
+      <li>9 Iron: 153 yards</li>
+      <li>8 Iron: 165 yards</li>
+      <li>7 Iron: 178 yards</li>
+      <li>6 Iron: 195 yards</li>
+      <li>5 Iron: 205 yards</li>
+      <li>4 Iron: 225 yards</li>
+    </ul>
+  </li>
+
+  <li>Woods and Driver
+    <ul>
+      <li>7 Wood: 250 yards</li>
+      <li>5 Wood: 275 yards</li>
+      <li>Driver: 315 yards</li>
+    </ul>
+  </li>
+</ol>
+  </div>
+
+  <div class="image-section">
+    <h2>Practice Focus</h2>
+    <img src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=1200&q=80" alt="Golfer hitting a shot on a course">
+    <p>The goal is not just hitting the ball far. The goal is choosing the right club and controlling distance.</p>
+  </div>
+
+  <div class="video-section">
+    <h2>Golf Swing Tips Video</h2>
+
+    <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/dUNC877IePA"
+    title="Golf Swing Tips Video"
+    allowfullscreen>
+    </iframe>
+
+</div>
+
+<div id="tableau" class="tableau-section">
+  <h2>Interactive Tableau Golf Visualization</h2>
+  <p>This interactive Tableau dashboard shows TPC Sawgrass golf course data</p>
+
+  <div class='tableauPlaceholder' id='vizTPCSawgrass' style='position: relative'>
+    <object class='tableauViz' style='display:none;'>
+      <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+      <param name='embed_code_version' value='3' />
+      <param name='site_root' value='' />
+      <param name='name' value='TPCSawgrassGolfCourse/TPCSawgrass' />
+      <param name='tabs' value='no' />
+      <param name='toolbar' value='yes' />
+      <param name='language' value='en-US' />
+    </object>
+  </div>
+
+  <script type='text/javascript'>
+    var divElement = document.getElementById('vizTPCSawgrass');
+    var vizElement = divElement.getElementsByTagName('object')[0];
+    vizElement.style.width = '100%';
+    vizElement.style.height = '700px';
+    var scriptElement = document.createElement('script');
+    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+    vizElement.parentNode.insertBefore(scriptElement, vizElement);
+  </script>
+</div>
+</body>
+</html>

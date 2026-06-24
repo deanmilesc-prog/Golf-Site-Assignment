@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golf Bag Optimizer</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #edf4ed;
+      color: #142414;
+      margin: 0;
+    }
+
+    nav {
+      background: #102d19;
+      padding: 12px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      margin: 0 12px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    header {
+      background: #1d4d2b;
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 25px auto;
+      padding: 20px;
+    }
+
+    .card-box {
+      background: white;
+      padding: 25px;
+      margin-bottom: 25px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    button {
+      background: #1d4d2b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #2f7a43;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 850px;
+      height: auto;
+      background: #2f9e44;
+      border: 8px solid #f5f5f5;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      display: block;
+      margin: 0 auto;
+      cursor: crosshair;
+    }
+
+    .instructions {
+      font-size: 15px;
+      color: #334;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="scratch.html">Back to Scratch Page</a>
+    <a href="index.html">Professional Site</a>
+  </nav>
+
+  <header>
+    <h1>Golf Bag Optimizer</h1>
+    <p>Choose smarter clubs, then play a three-hole mini golf challenge.</p>
+  </header>
+
+  <div class="container">
+    <div class="card-box">
+      <h2>Club Recommendation Tool</h2>
+      <p>Enter a yardage and the optimizer will recommend the closest club based on my current distances.</p>
+      <input type="number" id="distanceInput" placeholder="Enter distance in yards">
+      <button onclick="recommendClub()">Recommend Club</button>
+      <div id="recommendation" class="result"></div>
+    </div>
+
+    <div class="card-box">
+      <h2>Mini Golf Challenge</h2>
+      <p class="instructions">
+        Click and drag from the ball to aim. The longer the line, the stronger the putt. Release to shoot.
+        Make all three holes in as few strokes as possible.
+      </p>
+
+      <div class="game-header">
+        <span>Hole: <span id="holeNumber">1</span> / 3</span>
+        <span>Strokes this hole: <span id="strokes">0</span></span>
+        <span>Total strokes: <span id="totalStrokes">0</span></span>
+      </div>
+
+      <button onclick="resetGame()">Restart Full Game</button>
+      <canvas id="gameCanvas" width="850" height="500"></canvas>
+      <div id="gameMessage" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const clubs = [
+      { name: "PW", distance: 150 },
+      { name: "9 Iron", distance: 160 },
+      { name: "8 Iron", distance: 175 },
+      { name: "7 Iron", distance: 190 },
+      { name: "6 Iron", distance: 205 },
+      { name: "5 Iron", distance: 215 },
+      { name: "4 Iron", distance: 230 }
+    ];
+
+    function findBestClub(target) {
+      let bestClub = clubs[0];
+      let smallestGap = Math.abs(target - clubs[0].distance);
+
+      for (let i = 1; i < clubs.length; i++) {
+        let gap = Math.abs(target - clubs[i].distance);
+        if (gap < smallestGap) {
+          smallestGap = gap;
+          bestClub = clubs[i];
+        }
+      }
+
+      return bestClub;
+    }
+
+    function recommendClub() {
+      const distance = Number(document.getElementById("distanceInput").value);
+      const output = document.getElementById("recommendation");
+
+      if (!distance || distance <= 0) {
+        output.textContent = "Please enter a valid yardage.";
+        return;
+      }
+
+      const best = findBestClub(distance);
+      const gap = Math.abs(distance - best.distance);
+      output.textContent = `Recommended club: ${best.name} (${best.distance} yards). Gap: ${gap} yards.`;
+    }
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const ball = {
+      x: 80,
+      y: 250,
+      r: 9,
+      vx: 0,
+      vy: 0
+    };
+
+    let currentHole = 0;
+    let strokes = 0;
+    let totalStrokes = 0;
+    let aiming = false;
+    let aimX = 0;
+    let aimY = 0;
+    let waitingForNextHole = false;
+
+    const holes = [
+      {
+        start: { x: 85, y: 250 },
+        cup: { x: 760, y: 250 },
+        walls: [
+          { x: 300, y: 90, w: 25, h: 230 },
+          { x: 510, y: 180, w: 25, h: 230 }
+        ],
+        sand: [
+          { x: 390, y: 55, w: 80, h: 45 }
+        ]
+      },
+      {
+        start: { x: 80, y: 420 },
+        cup: { x: 760, y: 80 },
+        walls: [
+          { x: 180, y: 250, w: 350, h: 25 },
+          { x: 500, y: 110, w: 25, h: 220 },
+          { x: 95, y: 95, w: 170, h: 25 }
+        ],
+        sand: [
+          { x: 620, y: 210, w: 95, h: 60 }
+        ]
+      },
+      {
+        start: { x: 90, y: 90 },
+        cup: { x: 760, y: 410 },
+        walls: [
+          { x: 210, y: 0, w: 25, h: 250 },
+          { x: 210, y: 340, w: 25, h: 160 },
+          { x: 410, y: 150, w: 25, h: 250 },
+          { x: 610, y: 0, w: 25, h: 300 }
+        ],
+        sand: [
+          { x: 290, y: 285, w: 80, h: 55 },
+          { x: 665, y: 95, w: 85, h: 50 }
+        ]
+      }
+    ];
+
+    function loadHole(index) {
+      const hole = holes[index];
+      ball.x = hole.start.x;
+      ball.y = hole.start.y;
+      ball.vx = 0;
+      ball.vy = 0;
+      strokes = 0;
+      waitingForNextHole = false;
+
+      document.getElementById("holeNumber").textContent = index + 1;
+      document.getElementById("strokes").textContent = strokes;
+      document.getElementById("totalStrokes").textContent = totalStrokes;
+      document.getElementById("gameMessage").textContent = "";
+    }
+
+    function resetGame() {
+      currentHole = 0;
+      strokes = 0;
+      totalStrokes = 0;
+      loadHole(currentHole);
+    }
+
+    function drawCourse() {
+      const hole = holes[currentHole];
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#2f9e44";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#38b000";
+      ctx.fillRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+      ctx.strokeStyle = "#d9f99d";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+      hole.sand.forEach(s => {
+        ctx.fillStyle = "#e9c46a";
+        ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.strokeStyle = "#b0892f";
+        ctx.strokeRect(s.x, s.y, s.w, s.h);
+      });
+
+      hole.walls.forEach(w => {
+        ctx.fillStyle = "#e5e5e5";
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+        ctx.strokeStyle = "#8d99ae";
+        ctx.strokeRect(w.x, w.y, w.w, w.h);
+      });
+
+      ctx.beginPath();
+      ctx.arc(hole.cup.x, hole.cup.y, 15, 0, Math.PI * 2);
+      ctx.fillStyle = "#111";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(hole.cup.x, hole.cup.y);
+      ctx.lineTo(hole.cup.x, hole.cup.y - 45);
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(hole.cup.x, hole.cup.y - 45);
+      ctx.lineTo(hole.cup.x + 35, hole.cup.y - 34);
+      ctx.lineTo(hole.cup.x, hole.cup.y - 23);
+      ctx.closePath();
+      ctx.fillStyle = "#ef233c";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = "white";
+      ctx.fill();
+      ctx.strokeStyle = "#333";
+      ctx.stroke();
+
+      if (aiming && isBallStopped()) {
+        ctx.beginPath();
+        ctx.moveTo(ball.x, ball.y);
+        ctx.lineTo(aimX, aimY);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(aimX, aimY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+      }
+    }
+
+    function updateBall() {
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      ball.vx *= 0.985;
+      ball.vy *= 0.985;
+
+      if (Math.abs(ball.vx) < 0.03) ball.vx = 0;
+      if (Math.abs(ball.vy) < 0.03) ball.vy = 0;
+
+      if (ball.x - ball.r < 30 || ball.x + ball.r > canvas.width - 30) {
+        ball.vx *= -0.75;
+        ball.x = Math.max(30 + ball.r, Math.min(canvas.width - 30 - ball.r, ball.x));
+      }
+
+      if (ball.y - ball.r < 30 || ball.y + ball.r > canvas.height - 30) {
+        ball.vy *= -0.75;
+        ball.y = Math.max(30 + ball.r, Math.min(canvas.height - 30 - ball.r, ball.y));
+      }
+
+      holes[currentHole].walls.forEach(w => {
+        if (
+          ball.x + ball.r > w.x &&
+          ball.x - ball.r < w.x + w.w &&
+          ball.y + ball.r > w.y &&
+          ball.y - ball.r < w.y + w.h
+        ) {
+          const overlapLeft = ball.x + ball.r - w.x;
+          const overlapRight = w.x + w.w - (ball.x - ball.r);
+          const overlapTop = ball.y + ball.r - w.y;
+          const overlapBottom = w.y + w.h - (ball.y - ball.r);
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+          if (minOverlap === overlapLeft) {
+            ball.x = w.x - ball.r;
+            ball.vx *= -0.75;
+          } else if (minOverlap === overlapRight) {
+            ball.x = w.x + w.w + ball.r;
+            ball.vx *= -0.75;
+          } else if (minOverlap === overlapTop) {
+            ball.y = w.y - ball.r;
+            ball.vy *= -0.75;
+          } else {
+            ball.y = w.y + w.h + ball.r;
+            ball.vy *= -0.75;
+          }
+        }
+      });
+
+      holes[currentHole].sand.forEach(s => {
+        if (
+          ball.x > s.x &&
+          ball.x < s.x + s.w &&
+          ball.y > s.y &&
+          ball.y < s.y + s.h
+        ) {
+          ball.vx *= 0.94;
+          ball.vy *= 0.94;
+        }
+      });
+
+      checkCup();
+    }
+
+    function checkCup() {
+      const cup = holes[currentHole].cup;
+      const dx = ball.x - cup.x;
+      const dy = ball.y - cup.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+
+      if (distance < 15 && speed < 3 && !waitingForNextHole) {
+        ball.vx = 0;
+        ball.vy = 0;
+        waitingForNextHole = true;
+
+        if (currentHole < holes.length - 1) {
+          document.getElementById("gameMessage").textContent = `Hole ${currentHole + 1} complete in ${strokes} strokes. Loading next hole...`;
+          setTimeout(() => {
+            currentHole++;
+            loadHole(currentHole);
+          }, 1600);
+        } else {
+          document.getElementById("gameMessage").textContent = `Round complete! Final score: ${totalStrokes} strokes.`;
+        }
+      }
+    }
+
+    function isBallStopped() {
+      return ball.vx === 0 && ball.vy === 0;
+    }
+
+    function getMousePos(event) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+      };
+    }
+
+    canvas.addEventListener("mousedown", function(event) {
+      if (!isBallStopped() || waitingForNextHole) return;
+
+      const pos = getMousePos(event);
+      const dx = pos.x - ball.x;
+      const dy = pos.y - ball.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 35) {
+        aiming = true;
+        aimX = pos.x;
+        aimY = pos.y;
+      }
+    });
+
+    canvas.addEventListener("mousemove", function(event) {
+      if (aiming) {
+        const pos = getMousePos(event);
+        aimX = pos.x;
+        aimY = pos.y;
+      }
+    });
+
+    canvas.addEventListener("mouseup", function(event) {
+      if (!aiming) return;
+
+      const pos = getMousePos(event);
+      const dx = ball.x - pos.x;
+      const dy = ball.y - pos.y;
+
+      ball.vx = dx * 0.08;
+      ball.vy = dy * 0.08;
+
+      strokes++;
+      totalStrokes++;
+
+      document.getElementById("strokes").textContent = strokes;
+      document.getElementById("totalStrokes").textContent = totalStrokes;
+
+      aiming = false;
+    });
+
+    canvas.addEventListener("mouseleave", function() {
+      aiming = false;
+    });
+
+    function gameLoop() {
+      updateBall();
+      drawCourse();
+      requestAnimationFrame(gameLoop);
+    }
+
+    resetGame();
+    gameLoop();
+  </script>
+</body>
+</html>
